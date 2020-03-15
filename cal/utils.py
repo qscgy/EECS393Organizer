@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, date
 from calendar import HTMLCalendar, SUNDAY
 from .models import Event
 from django.shortcuts import reverse
+from django.utils.safestring import mark_safe
 
 class MonthlyCalendar(HTMLCalendar):
     def __init__(self, year=None, month=None):
@@ -18,7 +19,7 @@ class MonthlyCalendar(HTMLCalendar):
         if day != 0:
             date = date2str(self.year, self.month, day)
             url = f'{reverse("cal:dailycalendar")}?date={date}'
-            return f'<td><div class="div-box"><a href="{url}"><span class=\"date\">{day}</span><ul>{d}</ul></a></div></td>'
+            return f'<td class="day-cell" onclick="location.href=\'{url}\';"><span class=\"date\">{day}</span><ul>{d}</ul></td>'
         return '<td></td>'
     
     def formatweek(self, _week, events):

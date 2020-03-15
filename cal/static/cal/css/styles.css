@@ -64,6 +64,10 @@
   .form {
     margin: auto;
   }
+
+  .day-cell {
+    cursor: pointer;
+  }
   
   .form input, .form select, .form textarea {
     border-radius: 5px;
