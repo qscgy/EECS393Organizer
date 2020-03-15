@@ -1,14 +1,25 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import calendar
-from django.shortcuts import render
-from django.http import HttpResponse
+from django.shortcuts import render, get_object_or_404
+from django.http import HttpResponse, HttpResponseRedirect
 from django.views import generic
 from django.utils.safestring import mark_safe
 from .models import *
 from .utils import MonthlyCalendar
+from .forms import EventForm
 
 class LoginView(generic.TemplateView):
     template_name = 'cal/login.html'
+
+class DailyCalendarView(generic.ListView):
+    model = Event
+    context_object_name = 'event_list'
+    template_name = 'cal/dailycalendar.html'
+
+    def get_queryset(self):
+        self.datestring = self.request.GET.get('date', None)
+        self.day = date.fromisoformat(self.datestring)
+        return Event.objects.filter(start_time__contains=self.day)
 
 class MonthlyCalendarView(generic.ListView):
     model = Event
@@ -45,3 +56,17 @@ def get_date(day):
 
 def index(request):
     return HttpResponse('hi')
+
+def event(request, event_id=None):
+    instance = Event()
+    if event_id:    # If the event id is given, get the corresponding object so it can be edited
+        instance = get_object_or_404(Event, pk=event_id)
+    else:   # otherwise, use a blank Event
+        instance = Event()
+    
+    form = EventForm(request.POST or None, instance=instance)   # create a form to create or edit the event
+    if request.POST and form.is_valid():
+        # save the edited Event
+        form.save()
+        return HttpResponseRedirect(reverse('cal:monthlycalendar'))
+    return render(request, 'cal/event.html', {'form':form})

@@ -1,4 +1,6 @@
 from django.db import models
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 
 # Create your models here.
 
@@ -18,5 +20,10 @@ class Event(models.Model):
         '''
         return self.title
     
+    @property
+    def get_html_url(self):
+        url = reverse('cal:event_edit', args=(self.id,))
+        return mark_safe(f'<a href=\"{url}\">{self.title}</a>')
+
     def get_absolute_url(self):
         return reverse('model-detail-view', args=[str(self.id)])

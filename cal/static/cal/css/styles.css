@@ -13,6 +13,12 @@
     text-align: center;
     font-size: 18px;
   }
+
+  .div-box {
+    height: 100%;
+    width: 100%;
+    display: block;
+  }
   
   .calendar td {
     width: 200px;
@@ -53,4 +59,17 @@
   
   .clearfix {
     margin: 15px;
+  }
+
+  .form {
+    margin: auto;
+  }
+  
+  .form input, .form select, .form textarea {
+    border-radius: 5px;
+    border: 1px solid #17a2b8;
+    outline: none;
+    background: none;
+    padding: 5px;
+    width: 100%;
   }
