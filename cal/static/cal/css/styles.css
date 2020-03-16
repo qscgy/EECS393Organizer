@@ -65,7 +65,7 @@
     margin: auto;
   }
 
-  .day-cell {
+  td.day-cell {
     cursor: pointer;
   }
   

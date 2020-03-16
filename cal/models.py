@@ -1,15 +1,20 @@
 from django.db import models
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from datetime import date
 
 # Create your models here.
 
 class Event(models.Model):
     title = models.CharField(max_length=100)
-    description = models.TextField()
+    description = models.TextField(blank=True)
     start_time = models.DateTimeField()
-    end_time = models.DateTimeField()
-    location = models.CharField(max_length=100)
+    end_time = models.DateTimeField(null=True)
+    start_date = models.DateField(default=date.today)
+    start_hm = models.TimeField(null=True)
+    end_date = models.DateField(null=True)
+    end_hm = models.TimeField(null=True)
+    location = models.CharField(max_length=100, blank=True)
 
     class Meta:
         ordering = ['-start_time', '-title']
