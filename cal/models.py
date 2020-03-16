@@ -9,11 +9,11 @@ class Event(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     start_time = models.DateTimeField()
-    end_time = models.DateTimeField(null=True)
+    end_time = models.DateTimeField(null=True, blank=True)
     start_date = models.DateField(default=date.today)
-    start_hm = models.TimeField(null=True)
-    end_date = models.DateField(null=True)
-    end_hm = models.TimeField(null=True)
+    start_hm = models.TimeField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    end_hm = models.TimeField(null=True, blank=True)
     location = models.CharField(max_length=100, blank=True)
 
     class Meta:

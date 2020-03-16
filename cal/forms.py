@@ -1,6 +1,6 @@
 from django.forms import ModelForm, DateInput, TimeInput, HiddenInput
 from cal.models import Event
-from datetime import datetime, date
+from datetime import datetime, date, time
 
 class EventForm(ModelForm):
     class Meta:
@@ -22,11 +22,18 @@ class EventForm(ModelForm):
 
     def save(self, commit=True):
         form = super(EventForm, self).save(commit=False)
-        start_time = datetime.combine(self.cleaned_data['start_date'], self.cleaned_data['start_hm'])
-        end_time = datetime.combine(self.cleaned_data['end_date'], self.cleaned_data['end_hm'])
+        start_time = get_datetime(self.cleaned_data['start_date'], self.cleaned_data['start_hm'])
+        end_time = get_datetime(self.cleaned_data['end_date'], self.cleaned_data['end_hm'])
         form.start_time = start_time
         form.end_time = end_time
         print(start_time)
         if commit:
             form.save()
         return form
+
+def get_datetime(d, hm):
+    if d and hm:
+        return datetime.combine(d, hm)
+    elif d:
+        return datetime.combine(d, time(0, 0, 0))
+    return None
