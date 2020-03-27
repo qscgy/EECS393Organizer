@@ -13,7 +13,14 @@ Event
     {% csrf_token %}
     <table class="form form-table">
         {{form}}
-        <tr><td colspan="2"><button type="submit" class="btn btn-info right">Submit</button></td></tr>
+        <tr>
+        {% if evt_id %}
+        <td colspan="2"><a href="{% url 'cal:event_delete' evt_id %}">Delete</a></td>
+        {% else %}
+        <td colspan="2"><a href="{% url 'cal:monthlycalendar' %}">Cancel</a></td>
+        {% endif %}
+        <td colspan="2"><button type="submit" class="btn btn-info right">Submit</button></td>
+        </tr>
     </table>
-</from>
+</form>
 {% endblock %}

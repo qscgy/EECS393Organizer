@@ -77,3 +77,32 @@
     padding: 5px;
     width: 100%;
   }
+
+  .sidenav {
+    height: 100%;
+    width: 160px;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    background-color: #a8325a;
+    overflow-x: hidden;
+    padding-top: 20px;
+  }
+
+  .sidenav a {
+    display: block;
+    color: white;
+    padding: 16px;
+    text-decoration: none;
+  }
+
+  .sidenav a:hover {
+    background-color: slateblue;
+    color: white;
+  }
+
+  .main-content {
+    margin-left: 160px;
+    padding: 0px 10px;
+  }

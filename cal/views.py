@@ -69,4 +69,12 @@ def event(request, event_id=None):
         # save the edited Event
         form.save()
         return HttpResponseRedirect(reverse('cal:monthlycalendar'))
-    return render(request, 'cal/event.html', {'form':form})
+    return render(request, 'cal/event.html', {'form':form, "evt_id":event_id})
+
+def delete_event(request, event_id=None):
+    instance = get_object_or_404(Event, pk=event_id)
+
+    if request.method == 'POST':
+        instance.delete()
+        return HttpResponseRedirect(reverse('cal:monthlycalendar'))
+    return render(request, 'cal/confirm_delete.html', {'evt_id':event_id})
