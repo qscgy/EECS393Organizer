@@ -1,0 +1,14 @@
+{% extends 'cal/base.html' %}
+
+{% block content %}
+    <h1>Events for today</h1>
+    {% if event_list %}
+    <ul>
+        {% for event in event_list %}
+            <li>{{event.get_html_url}}</li>
+        {% endfor %}
+    </ul>
+    {% else %}
+        <p>No events for today.</p>
+    {% endif %}
+{% endblock %}

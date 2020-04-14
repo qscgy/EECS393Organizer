@@ -9,7 +9,12 @@
   <title>Monthly Calendar</title>
 </head>
 <body>
-  {% block  content %}
-  {% endblock %}
+  <div class="sidenav">
+    <a href="{% url 'cal:monthlycalendar' %}">Home</a>
+  </div>
+  <div class="main-content">
+    {% block content %}
+    {% endblock %}
+  </div>
 </body>
 </html>

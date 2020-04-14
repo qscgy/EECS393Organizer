@@ -13,6 +13,12 @@
     text-align: center;
     font-size: 18px;
   }
+
+  .div-box {
+    height: 100%;
+    width: 100%;
+    display: block;
+  }
   
   .calendar td {
     width: 200px;
@@ -35,4 +41,68 @@
   
   a {
     color: #17a2b8;
+  }
+  .left {
+    float: left;
+  }
+  
+  .right {
+    float: right;
+  }
+  
+  .btn {
+    outline: none;
+    color: black;
+    background-color: transparent;
+    box-shadow: 0 0 0 0;
+  }
+  
+  .clearfix {
+    margin: 15px;
+  }
+
+  .form {
+    margin: auto;
+  }
+
+  td.day-cell {
+    cursor: pointer;
+  }
+  
+  .form input, .form select, .form textarea {
+    border-radius: 5px;
+    border: 1px solid #17a2b8;
+    outline: none;
+    background: none;
+    padding: 5px;
+    width: 100%;
+  }
+
+  .sidenav {
+    height: 100%;
+    width: 160px;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    background-color: #a8325a;
+    overflow-x: hidden;
+    padding-top: 20px;
+  }
+
+  .sidenav a {
+    display: block;
+    color: white;
+    padding: 16px;
+    text-decoration: none;
+  }
+
+  .sidenav a:hover {
+    background-color: slateblue;
+    color: white;
+  }
+
+  .main-content {
+    margin-left: 160px;
+    padding: 0px 10px;
   }

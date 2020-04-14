@@ -1,0 +1,26 @@
+{% extends 'cal/base.html' %}
+
+{% block title %}
+Event
+{% endblock %}
+
+{% block content %}
+<div class="clearfix">
+    <a class="btn btn-info left" href="{% url 'cal:monthlycalendar' %}">Monthly Calendar</a>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <table class="form form-table">
+        {{form}}
+        <tr>
+        {% if evt_id %}
+        <td colspan="2"><a href="{% url 'cal:event_delete' evt_id %}">Delete</a></td>
+        {% else %}
+        <td colspan="2"><a href="{% url 'cal:monthlycalendar' %}">Cancel</a></td>
+        {% endif %}
+        <td colspan="2"><button type="submit" class="btn btn-info right">Submit</button></td>
+        </tr>
+    </table>
+</form>
+{% endblock %}
