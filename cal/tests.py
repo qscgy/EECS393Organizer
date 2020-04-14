@@ -2,7 +2,17 @@ from django.test import TestCase
 from django.core.exceptions import ValidationError
 from .models import Event
 from .forms import EventForm
-from datetime import date
+from datetime import date, time
+
+class EventModelTests(TestCase):
+    # Test if an event can be created with only a date and not a time provided for start_time
+    e = ''
+    def test_needs_date(self):
+        self.assertRaises(TypeError, lambda : Event.objects.create(title='something', start_time=time(11,20)))
+
+    def test_needs_title(self):
+        event = Event.objects.create(start_time=date(2020,4,17))
+        self.assertEquals(event.title, '')
 
 class EventFormTests(TestCase):
     # Test if the start date field is required

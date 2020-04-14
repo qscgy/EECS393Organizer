@@ -11,6 +11,9 @@ from .forms import EventForm
 class LoginView(generic.TemplateView):
     template_name = 'cal/login.html'
 
+class GetCanvasView(generci.TemplateView):
+    template_name = 'cal/load_canvas.html'
+
 class DailyCalendarView(generic.ListView):
     model = Event
     context_object_name = 'event_list'
