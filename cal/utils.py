@@ -45,8 +45,3 @@ class MonthlyCalendar(HTMLCalendar):
 
 def date2str(year, month, day):
     return date(year, month, day).isoformat()
-
-def load_assignments():
-    canvas = Canvas(settings.API_URL, settings.API_KEY)
-    course = canvas.get_course(21204)
-    print(course.name)

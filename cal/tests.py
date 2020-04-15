@@ -1,8 +1,41 @@
-from django.test import TestCase
+from django.test import TestCase, RequestFactory
 from django.core.exceptions import ValidationError
-from .models import Event
+from .models import Event, Metadata
 from .forms import EventForm
-from datetime import date, time
+from datetime import date, time, datetime, timezone, timedelta
+from django.shortcuts import reverse
+from . import views
+
+class ViewTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user, cls.courses, cls.assignments = views.access_canvas()
+    
+    def test_canvas_call(self):
+        self.assertTrue(len(self.user.__str__()) > 0)
+        self.assertTrue(self.courses[0] is not None)
+        self.assertTrue(len(self.assignments) > 0)
+        # for c in self.courses:
+        #     try:
+        #         print(c.name, c.__dict__['id'])
+        #     except:
+        #         print(c.__dict__)
+        # for a in self.assignments:
+        #     print(a)
+    
+    def test_metadata_updates(self):
+        md = Metadata.load()
+        self.assertTrue(md.last_canvas_call < datetime.now(timezone.utc))
+
+class TimingTests(TestCase):
+    def test_change_date(self):
+        user, courses, assignments = views.access_canvas()
+        md = Metadata.load()
+        md.last_canvas_call += timedelta(days=-90)
+        md.save()
+        user, courses, assignments = views.access_canvas()
+        self.assertTrue(len(assignments) > 0)
+
 
 class EventModelTests(TestCase):
     # Test if an event can be created with only a date and not a time provided for start_time

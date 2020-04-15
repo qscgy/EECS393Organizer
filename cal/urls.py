@@ -9,4 +9,5 @@ urlpatterns = [
     path('event/edit/<int:event_id>/', views.event, name='event_edit'),
     path('dailycalendar/', views.DailyCalendarView.as_view(), name='dailycalendar'),
     path('event/delete/<int:event_id>', views.delete_event, name='event_delete'),
+    path('canvasevents/', views.CanvasItemListView.as_view(), name='canvas_events'),
 ]

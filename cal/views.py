@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 import calendar
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
@@ -7,12 +7,27 @@ from django.utils.safestring import mark_safe
 from .models import *
 from .utils import MonthlyCalendar
 from .forms import EventForm
+from canvasapi import Canvas
+from .local_settings import *
+import pytz
 
 class LoginView(generic.TemplateView):
     template_name = 'cal/login.html'
 
-class GetCanvasView(generci.TemplateView):
-    template_name = 'cal/load_canvas.html'
+class CanvasItemListView(generic.ListView):
+    model = Event
+    context_object_name = 'event_list'
+    template_name = 'cal/canvas_item_list.html'
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user, courses, assignments = access_canvas()
+        asgn_events = []
+        for a in assignments:
+            asgn_events.append(dict_to_event(a))
+            asgn_events[-1].save()
+        context['event_list'] = asgn_events
+        return context
 
 class DailyCalendarView(generic.ListView):
     model = Event
@@ -81,3 +96,41 @@ def delete_event(request, event_id=None):
         instance.delete()
         return HttpResponseRedirect(reverse('cal:monthlycalendar'))
     return render(request, 'cal/confirm_delete.html', {'evt_id':event_id})
+
+def access_canvas():
+    metadata = Metadata.load()
+    last_call = metadata.last_canvas_call or pytz.utc.localize(datetime.utcnow())
+    last_call = last_call.replace(tzinfo=pytz.UTC)
+    call_time = pytz.utc.localize(datetime.utcnow())
+    canvas = Canvas(API_URL, API_KEY)
+    user = canvas.get_current_user()
+    courses = user.get_courses(enrollment_status='active')
+    assignments = []
+
+    for c in courses:
+        if 'enrollment_term_id' in c.__dict__.keys() and c.__dict__['enrollment_term_id']==108:
+            asgn = c.get_assignments()
+            for a in asgn:
+                a = a.__dict__
+                try:
+                    created = pytz.utc.localize(datetime.strptime(a['created_at'], '%Y-%m-%dT%H:%M:%SZ'))
+                    print(last_call)
+                    if datetime.strptime(a['due_at'], '%Y-%m-%dT%H:%M:%SZ') and created and created >= last_call:
+                        # print(a.name)
+                        a['course_name'] = c.name
+                        assignments.append(a)
+                except Exception as ex:
+                    print(ex)
+    
+    metadata.last_canvas_call = call_time
+    metadata.save()
+    return user, courses, assignments
+
+def dict_to_event(assignment):
+    dc = assignment
+    return Event.objects.create(title=dc['name'], start_time=datetime.strptime(dc['due_at'], '%Y-%m-%dT%H:%M:%SZ'), 
+    description=dc['course_name'])
+
+def load_assignments(request):
+    user, courses, assignments = access_canvas()
+    return render(request, 'cal/load_canvas.html', {'assignments':assignments})

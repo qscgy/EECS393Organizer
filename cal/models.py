@@ -5,6 +5,21 @@ from datetime import date
 
 # Create your models here.
 
+class Metadata(models.Model):
+    last_canvas_call = models.DateTimeField(null=True)
+    
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super(Metadata, self).save(*args, **kwargs)
+    
+    def delete(self):
+        pass
+
+    @classmethod
+    def load(cls):
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj
+
 class Event(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField(blank=True)
