@@ -16,6 +16,9 @@ class DCViewTests(TestCase):
         cls.user.save()
 
     def test_is_list(self):
+        '''
+        Test if the DailyCalendarView is actually a list.
+        '''
         form_data = {'title':'something', 'start_date':date(2020, 4, 17)}
         form = EventForm(data=form_data)
         sv = form.save()
@@ -31,6 +34,9 @@ class CanvasTests(TestCase):
         cls.user, cls.courses, cls.assignments = views.access_canvas()
     
     def test_canvas_call(self):
+        '''
+        Test that the Canvas API call does not return empty lists when it should not.
+        '''
         md = Metadata.load()
         md.last_canvas_call += timedelta(days=-90)
         md.save()
@@ -40,34 +46,53 @@ class CanvasTests(TestCase):
         self.assertTrue(courses[0] is not None)
         self.assertTrue(len(assignments) > 0)
 
-    def test_metadata_updates(self):
-        md = Metadata.load()
-        self.assertTrue(md.last_canvas_call < datetime.now(timezone.utc))
-
 class TimingTests(TestCase):
     def test_change_date(self):
+        '''
+        Test that the Canvas API will retrieve new assignments when they exist, and won't return when they don't.
+        Combined into one method to reduce the number of external API calls, which take time and may raise
+        security alerts.
+        '''
         user, courses, assignments = views.access_canvas()
         md = Metadata.load()
         md.last_canvas_call += timedelta(days=-90)
         md.save()
         user, courses, assignments = views.access_canvas()
         self.assertTrue(len(assignments) > 0)
+        user, courses, assignments = views.access_canvas()
+        self.assertEquals(len(assignments), 0)
 
 class EventModelTests(TestCase):
-    # Test if an event can be created with only a date and not a time provided for start_time
-    e = ''
     def test_needs_date(self):
+        '''
+        Tests if the start date is required.
+        '''
         self.assertRaises(TypeError, lambda : Event.objects.create(title='something', start_time=time(11,20)))
 
     def test_blank_title(self):
+        '''
+        Test the behavior when a title is not provided.
+        '''
         event = Event.objects.create(start_time=date(2020,4,17))
         self.assertEquals(event.title, '')
+    
+    def test_date_start_time(self):
+        try:
+            event = Event.objects.create(title='evt', start_time=date(202,4,16))
+        except:
+            self.fail('This event should be valid')
 
     def test_all_fields(self):
+        '''
+        Tests that no errors are raised when all fields are filled out.
+        '''
         event = Event.objects.create(start_time=datetime(2020,4,17,hour=1,minute=1,second=1), title='t', description='yes',
-         end_time=datetime(2020,4,17,hour=1,minute=1,second=1))
+         end_time=datetime(2020,4,17,hour=1,minute=2,second=1))
         
     def test_persistence(self):
+        '''
+        Tests that events can be saved and loaded.
+        '''
         form_data = {'title':'something', 'start_time':date(2020, 4, 17)}
         event = Event.objects.create(**form_data)
         event.save()
@@ -75,7 +100,7 @@ class EventModelTests(TestCase):
         try:
             ev2 = Event.objects.get(pk=evt_id)
         except:
-            self.fail('Restoring saved event should not raise an exception')
+            self.fail('Loading a saved event should not raise an exception')
 
 class EventFormTests(TestCase):
     def setUp(self):
@@ -83,12 +108,18 @@ class EventFormTests(TestCase):
     
     # Test if the start date field is required
     def test_needs_start_date(self):
+        '''
+        Tests that the form validation catches a lack of start date.
+        '''
         form_data = {'title':'something'}
         form = EventForm(data=form_data)
         self.assertFalse(form.is_valid())
     
     # Test if the title field is required
     def test_needs_title(self):
+        '''
+        Tests that the form validation catches a lack of title.
+        '''
         form_data = {'start_date':date(2020, 4, 17)}
         form = EventForm(data=form_data)
         self.assertFalse(form.is_valid())
@@ -100,6 +131,9 @@ class EventFormTests(TestCase):
         self.assertTrue(form.is_valid())
     
     def test_persistence(self):
+        '''
+        Tests whether saved events are loaded without data changing.
+        '''
         form_data = {'title':'something', 'start_date':date(2020, 4, 17)}
         form = EventForm(data=form_data)
         sv = form.save()
@@ -108,6 +142,9 @@ class EventFormTests(TestCase):
         self.assertEquals(evt.start_date, form_data['start_date'])
     
     def test_edit_view(self):
+        '''
+        Tests that the event_edit path loads.
+        '''
         event = Event.objects.create(start_time=date(2020,4,17))
         evt_id = event.id
         req = self.rf.post(f'event/delete/{evt_id}')
@@ -117,6 +154,9 @@ class EventFormTests(TestCase):
             self.fail('Calling event should not raise an exception')
     
     def test_delete_view(self):
+        '''
+        Tests whether event_delete deletes events.
+        '''
         event = Event.objects.create(start_time=date(2020,4,17))
         evt_id = event.id
         req = self.rf.post(f'event/delete/{evt_id}')
@@ -133,10 +173,16 @@ class PageTests(TestCase):
         logged_in = cls.c.login(username='testuser', password='12345')
     
     def test_home_is_monthlycalendar(self):
+        '''
+        Tests that the home page is a MonthlyCalendarView.
+        '''
         found = resolve('/')
         self.assertEquals(type(found.func), type(views.MonthlyCalendarView.as_view()))
     
-    def test_home_is_table(self):
+    def test_monthlycalendar_is_table(self):
+        '''
+        Tests that the monthlycalendar is a table with at least one cell.
+        '''
         response = self.c.get(reverse('cal:monthlycalendar'))
         print(response.content)
         self.assertContains(response, '<td>', html=True, status_code=200)

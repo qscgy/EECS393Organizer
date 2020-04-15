@@ -101,14 +101,21 @@ def delete_event(request, event_id=None):
 
 def access_canvas():
     metadata = Metadata.load()
+
+    # Load the last call and localize it to UTC.
     last_call = metadata.last_canvas_call or pytz.utc.localize(datetime.utcnow())
     last_call = last_call.replace(tzinfo=pytz.UTC)
+
+    # Set call_time to the time right before we make the API call.
     call_time = pytz.utc.localize(datetime.utcnow())
+
     canvas = Canvas(API_URL, API_KEY)
     user = canvas.get_current_user()
     courses = user.get_courses(enrollment_status='active')
     assignments = []
 
+    # For each of the user's courses for the current term, finds all assignments created after last_call,
+    # converts them to dictionaries, and adds them to a list.
     for c in courses:
         if 'enrollment_term_id' in c.__dict__.keys() and c.__dict__['enrollment_term_id']==108:
             asgn = c.get_assignments()
@@ -117,7 +124,6 @@ def access_canvas():
                 try:
                     created = pytz.utc.localize(datetime.strptime(a['created_at'], '%Y-%m-%dT%H:%M:%SZ'))
                     if datetime.strptime(a['due_at'], '%Y-%m-%dT%H:%M:%SZ') and created and created >= last_call:
-                        # print(a.name)
                         a['course_name'] = c.name
                         assignments.append(a)
                 except Exception as ex:
@@ -128,6 +134,10 @@ def access_canvas():
     return user, courses, assignments
 
 def dict_to_event(assignment):
+    '''
+    Takes an assignment (as a dictionary) and returns an event with the same name, start_time equal to the due date,
+    and the course name as the description.
+    '''
     dc = assignment
     st = pytz.utc.localize(datetime.strptime(dc['due_at'], '%Y-%m-%dT%H:%M:%SZ'))
     print(st)

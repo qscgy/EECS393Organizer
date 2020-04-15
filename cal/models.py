@@ -6,7 +6,10 @@ from datetime import date
 # Create your models here.
 
 class Metadata(models.Model):
-    last_canvas_call = models.DateTimeField(null=True)
+    '''
+    Class to store metadata for the user.
+    '''
+    last_canvas_call = models.DateTimeField(null=True)  # the last time the Canvas API was called
     
     def save(self, *args, **kwargs):
         self.pk = 1
@@ -21,6 +24,9 @@ class Metadata(models.Model):
         return obj
 
 class Event(models.Model):
+    '''
+    Class to represent a single calendar event. It can have a name, description, and start and end dates/times.
+    '''
     title = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     start_time = models.DateTimeField()
@@ -42,6 +48,9 @@ class Event(models.Model):
     
     @property
     def get_html_url(self):
+        '''
+        Return the URL for this Event.
+        '''
         url = reverse('cal:event_edit', args=(self.id,))
         return mark_safe(f'<a href=\"{url}\">{self.title}</a>')
 
