@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_tables2',
-    # 'canvas_oauth.apps.CanvasOAuthConfig',
+    'django_nose',
     'cal',
 ]
 
@@ -54,6 +54,13 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'organizer.urls'
+
+TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
+
+NOSE_ARGS = [
+    '--with-coverage',
+    '--cover-package=cal',
+]
 
 TEMPLATES = [
     {
