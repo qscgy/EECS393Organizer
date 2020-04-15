@@ -6,13 +6,21 @@ from datetime import date, time, datetime, timezone, timedelta
 from django.shortcuts import reverse
 from . import views, utils
 from django.urls import resolve
+from django.contrib.auth.models import User
 
 class DCViewTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create(username='testuser')
+        cls.user.set_password('12345')
+        cls.user.save()
+
     def test_is_list(self):
         form_data = {'title':'something', 'start_date':date(2020, 4, 17)}
         form = EventForm(data=form_data)
         sv = form.save()
         c = Client()
+        logged_in = c.login(username='testuser', password='12345')
         response = c.get(f'{reverse("cal:dailycalendar")}?date={utils.date2str(2020, 4, 17)}')
         print(response.content)
         self.assertTrue('<li>' in response.content.decode())
@@ -31,14 +39,7 @@ class CanvasTests(TestCase):
         self.assertTrue(len(user.__str__()) > 0)
         self.assertTrue(courses[0] is not None)
         self.assertTrue(len(assignments) > 0)
-        # for c in self.courses:
-        #     try:
-        #         print(c.name, c.__dict__['id'])
-        #     except:
-        #         print(c.__dict__)
-        # for a in self.assignments:
-        #     print(a)
-    
+
     def test_metadata_updates(self):
         md = Metadata.load()
         self.assertTrue(md.last_canvas_call < datetime.now(timezone.utc))
@@ -51,7 +52,6 @@ class TimingTests(TestCase):
         md.save()
         user, courses, assignments = views.access_canvas()
         self.assertTrue(len(assignments) > 0)
-
 
 class EventModelTests(TestCase):
     # Test if an event can be created with only a date and not a time provided for start_time
@@ -71,9 +71,16 @@ class EventModelTests(TestCase):
         form_data = {'title':'something', 'start_time':date(2020, 4, 17)}
         event = Event.objects.create(**form_data)
         event.save()
-        ev2 = Event.objects.get(pk=event.id)
+        evt_id = event.id
+        try:
+            ev2 = Event.objects.get(pk=evt_id)
+        except:
+            self.fail('Restoring saved event should not raise an exception')
 
 class EventFormTests(TestCase):
+    def setUp(self):
+        self.rf = RequestFactory()
+    
     # Test if the start date field is required
     def test_needs_start_date(self):
         form_data = {'title':'something'}
@@ -99,13 +106,37 @@ class EventFormTests(TestCase):
         evt = Event.objects.get(pk=sv.pk)
         self.assertEquals(evt.title, form_data['title'])
         self.assertEquals(evt.start_date, form_data['start_date'])
+    
+    def test_edit_view(self):
+        event = Event.objects.create(start_time=date(2020,4,17))
+        evt_id = event.id
+        req = self.rf.post(f'event/delete/{evt_id}')
+        try:
+            response = views.event(req, event_id=evt_id)
+        except:
+            self.fail('Calling event should not raise an exception')
+    
+    def test_delete_view(self):
+        event = Event.objects.create(start_time=date(2020,4,17))
+        evt_id = event.id
+        req = self.rf.post(f'event/delete/{evt_id}')
+        response = views.delete_event(req, event_id=evt_id)
+        self.assertRaises(Event.DoesNotExist, lambda : Event.objects.get(pk=evt_id))
 
 class PageTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create(username='testuser')
+        cls.user.set_password('12345')
+        cls.user.save()
+        cls.c = Client()
+        logged_in = cls.c.login(username='testuser', password='12345')
+    
     def test_home_is_monthlycalendar(self):
         found = resolve('/')
         self.assertEquals(type(found.func), type(views.MonthlyCalendarView.as_view()))
     
     def test_home_is_table(self):
-        c = Client()
-        response = c.get(reverse('cal:monthlycalendar'))
+        response = self.c.get(reverse('cal:monthlycalendar'))
+        print(response.content)
         self.assertContains(response, '<td>', html=True, status_code=200)

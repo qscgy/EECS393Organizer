@@ -136,10 +136,6 @@ def dict_to_event(assignment):
      description=dc['course_name'])
     return ev
 
-def load_assignments(request):
-    user, courses, assignments = access_canvas()
-    return render(request, 'cal/load_canvas.html', {'assignments':assignments})
-
 def error_500(request, *args, **kwargs):
     data = {}
     return render(request, 'cal/500.html', data)
