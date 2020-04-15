@@ -10,6 +10,7 @@ from .forms import EventForm
 from canvasapi import Canvas
 from .local_settings import *
 import pytz
+import tzlocal
 
 class LoginView(generic.TemplateView):
     template_name = 'cal/login.html'
@@ -37,7 +38,8 @@ class DailyCalendarView(generic.ListView):
     def get_queryset(self):
         self.datestring = self.request.GET.get('date', None)
         self.day = date.fromisoformat(self.datestring)
-        return Event.objects.filter(start_time__contains=self.day)
+        qs = Event.objects.filter(start_date__contains=self.day)
+        return qs
 
 class MonthlyCalendarView(generic.ListView):
     model = Event
@@ -114,7 +116,6 @@ def access_canvas():
                 a = a.__dict__
                 try:
                     created = pytz.utc.localize(datetime.strptime(a['created_at'], '%Y-%m-%dT%H:%M:%SZ'))
-                    print(last_call)
                     if datetime.strptime(a['due_at'], '%Y-%m-%dT%H:%M:%SZ') and created and created >= last_call:
                         # print(a.name)
                         a['course_name'] = c.name
@@ -128,9 +129,17 @@ def access_canvas():
 
 def dict_to_event(assignment):
     dc = assignment
-    return Event.objects.create(title=dc['name'], start_time=datetime.strptime(dc['due_at'], '%Y-%m-%dT%H:%M:%SZ'), 
-    description=dc['course_name'])
+    st = pytz.utc.localize(datetime.strptime(dc['due_at'], '%Y-%m-%dT%H:%M:%SZ'))
+    print(st)
+    st2 = st.astimezone(tzlocal.get_localzone())
+    ev = Event.objects.create(title=dc['name'], start_time=st2, start_date=st2.date(), start_hm=st2.time(),
+     description=dc['course_name'])
+    return ev
 
 def load_assignments(request):
     user, courses, assignments = access_canvas()
     return render(request, 'cal/load_canvas.html', {'assignments':assignments})
+
+def error_500(request, *args, **kwargs):
+    data = {}
+    return render(request, 'cal/500.html', data)

@@ -7,14 +7,20 @@ from django.shortcuts import reverse
 from . import views
 
 class ViewTests(TestCase):
+
     @classmethod
     def setUpTestData(cls):
         cls.user, cls.courses, cls.assignments = views.access_canvas()
     
     def test_canvas_call(self):
-        self.assertTrue(len(self.user.__str__()) > 0)
-        self.assertTrue(self.courses[0] is not None)
-        self.assertTrue(len(self.assignments) > 0)
+        md = Metadata.load()
+        md.last_canvas_call += timedelta(days=-90)
+        md.save()
+        user, courses, assignments = views.access_canvas()
+        print(md.last_canvas_call)
+        self.assertTrue(len(user.__str__()) > 0)
+        self.assertTrue(courses[0] is not None)
+        self.assertTrue(len(assignments) > 0)
         # for c in self.courses:
         #     try:
         #         print(c.name, c.__dict__['id'])
@@ -43,7 +49,7 @@ class EventModelTests(TestCase):
     def test_needs_date(self):
         self.assertRaises(TypeError, lambda : Event.objects.create(title='something', start_time=time(11,20)))
 
-    def test_needs_title(self):
+    def test_blank_title(self):
         event = Event.objects.create(start_time=date(2020,4,17))
         self.assertEquals(event.title, '')
 
@@ -65,3 +71,9 @@ class EventFormTests(TestCase):
         form_data = {'title':'something', 'start_date':date(2020, 4, 17)}
         form = EventForm(data=form_data)
         self.assertTrue(form.is_valid())
+    
+    def test_persistence(self):
+        form_data = {'title':'something', 'start_time':date(2020, 4, 17)}
+        event = Event.objects.create(**form_data)
+        event.save()
+        ev2 = Event.objects.get(pk=event.id)

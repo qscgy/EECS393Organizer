@@ -12,6 +12,7 @@ class EventForm(ModelForm):
             'end_hm': TimeInput(attrs={'type':'time'}, format='%H:%M'),
         }
         exclude = ['start_time', 'end_time',]
+        # exclude = []
         labels = {
             'start_hm':('Start time'),
             'end_hm':('End time'),

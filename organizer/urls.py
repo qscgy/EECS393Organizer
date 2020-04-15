@@ -18,8 +18,12 @@ from django.urls import path, include
 from django.views.generic import RedirectView
 from django.conf import settings
 from django.conf.urls.static import static
+from django.conf.urls import handler404, handler500
+from cal import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('cal.urls')),
 ]
+
+handler500 = views.error_500

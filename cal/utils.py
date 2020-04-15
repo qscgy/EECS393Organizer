@@ -13,7 +13,7 @@ class MonthlyCalendar(HTMLCalendar):
         super(MonthlyCalendar, self).__init__()
     
     def formatday(self, day, events):
-        events_per_day = events.filter(start_time__day=day)
+        events_per_day = events.filter(start_date__day=day)
         d = ''
         for ev in events_per_day:
             d += f'<li>{ev.get_html_url}</li>'
