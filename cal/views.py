@@ -4,6 +4,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.views import generic
 from django.utils.safestring import mark_safe
+from django.core.exceptions import PermissionDenied
 from .models import *
 from .utils import MonthlyCalendar
 from .forms import EventForm
@@ -25,7 +26,7 @@ class CanvasItemListView(generic.ListView):
         user, courses, assignments = access_canvas()
         asgn_events = []
         for a in assignments:
-            asgn_events.append(dict_to_event(a))
+            asgn_events.append(dict_to_event(a, user=self.request.user))
             asgn_events[-1].save()
         context['event_list'] = asgn_events
         return context
@@ -38,7 +39,7 @@ class DailyCalendarView(generic.ListView):
     def get_queryset(self):
         self.datestring = self.request.GET.get('date', None)
         self.day = date.fromisoformat(self.datestring)
-        qs = Event.objects.filter(start_date__contains=self.day)
+        qs = Event.objects.filter(user=self.request.user, start_date__contains=self.day)
         return qs
 
 class MonthlyCalendarView(generic.ListView):
@@ -47,8 +48,10 @@ class MonthlyCalendarView(generic.ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        if not self.request.user.is_authenticated:
+            return None
         d = get_date(self.request.GET.get('month', None))
-        cal = MonthlyCalendar(d.year, d.month)
+        cal = MonthlyCalendar(self.request, d.year, d.month)
         html_cal = cal.format()
         context['monthlycalendar'] = mark_safe(html_cal)
         context['prev_month'] = prev_month(d)
@@ -84,7 +87,10 @@ def event(request, event_id=None):
     else:   # otherwise, use a blank Event
         instance = Event()
     
-    form = EventForm(request.POST or None, instance=instance)   # create a form to create or edit the event
+    if instance.user != request.user:
+        raise PermissionDenied
+
+    form = EventForm(request.POST or None, instance=instance, user=request.user)   # create a form to create or edit the event
     if request.POST and form.is_valid():
         # save the edited Event
         form.save()
@@ -94,6 +100,8 @@ def event(request, event_id=None):
 def delete_event(request, event_id=None):
     instance = get_object_or_404(Event, pk=event_id)
 
+    if request.user != instance.user:
+        raise PermissionDenied
     if request.method == 'POST':
         instance.delete()
         return HttpResponseRedirect(reverse('cal:monthlycalendar'))
@@ -133,7 +141,7 @@ def access_canvas():
     metadata.save()
     return user, courses, assignments
 
-def dict_to_event(assignment):
+def dict_to_event(assignment, user):
     '''
     Takes an assignment (as a dictionary) and returns an event with the same name, start_time equal to the due date,
     and the course name as the description.
@@ -143,7 +151,7 @@ def dict_to_event(assignment):
     print(st)
     st2 = st.astimezone(tzlocal.get_localzone())
     ev = Event.objects.create(title=dc['name'], start_time=st2, start_date=st2.date(), start_hm=st2.time(),
-     description=dc['course_name'])
+     description=dc['course_name'], user=user)
     return ev
 
 def error_500(request, *args, **kwargs):

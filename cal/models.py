@@ -2,6 +2,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from datetime import date
+from django.contrib.auth import get_user_model
 
 # Create your models here.
 
@@ -27,6 +28,7 @@ class Event(models.Model):
     '''
     Class to represent a single calendar event. It can have a name, description, and start and end dates/times.
     '''
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, null=True)
     title = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     start_time = models.DateTimeField()
