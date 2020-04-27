@@ -2,8 +2,9 @@ from django.test import TestCase, RequestFactory, Client
 from django.core.exceptions import ValidationError
 from .models import Event, Metadata
 from .forms import EventForm
+from django.contrib.auth.forms import UserCreationForm
 from datetime import date, time, datetime, timezone, timedelta
-from django.shortcuts import reverse
+from django.shortcuts import reverse, get_object_or_404
 from . import views, utils
 from django.urls import resolve
 from django.contrib.auth.models import User
@@ -29,40 +30,55 @@ class DCViewTests(TestCase):
         print(response.content)
         self.assertTrue('<li>' in response.content.decode())
 
+class UserCreationTests(TestCase):
+    def test_create_user(self):
+        form_data = {'username':'testuser', 'password1':'passwrod', 'password2':'passwrod'}
+        form = UserCreationForm(data=form_data)
+        form.save()
+        
 class CanvasTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.canv_user, cls.courses, cls.assignments = views.access_canvas()
+        cls.user = User.objects.create(username='testuser')
+        cls.user.set_password('12345')
+        cls.user.save()
+        cls.c = Client()
+        logged_in = cls.c.login(username='testuser', password='12345')
+
+        md = Metadata(user=cls.user)
+        md.last_canvas_call = datetime(2020, 1, 1)
+        md.save()
+
+        cls.canv_user, cls.courses, cls.assignments = views.access_canvas(cls.user)
     
     def test_canvas_call(self):
         '''
         Test that the Canvas API call does not return empty lists when it should not.
         '''
-        md = Metadata.load()
+        md = get_object_or_404(Metadata, user=self.user)
         md.last_canvas_call += timedelta(days=-90)
         md.save()
-        user, courses, assignments = views.access_canvas()
+        user, courses, assignments = views.access_canvas(self.user)
         print(md.last_canvas_call)
         self.assertTrue(len(user.__str__()) > 0)
         self.assertTrue(courses[0] is not None)
         self.assertTrue(len(assignments) > 0)
-
-class TimingTests(TestCase):
+    
     def test_change_date(self):
         '''
         Test that the Canvas API will retrieve new assignments when they exist, and won't return when they don't.
         Combined into one method to reduce the number of external API calls, which take time and may raise
         security alerts.
         '''
-        user, courses, assignments = views.access_canvas()
-        md = Metadata.load()
+        user, courses, assignments = views.access_canvas(self.user)
+        md = get_object_or_404(Metadata, user=self.user)
         md.last_canvas_call += timedelta(days=-90)
         md.save()
-        user, courses, assignments = views.access_canvas()
+        user, courses, assignments = views.access_canvas(self.user)
         self.assertTrue(len(assignments) > 0)
-        user, courses, assignments = views.access_canvas()
+        user, courses, assignments = views.access_canvas(self.user)
         self.assertEquals(len(assignments), 0)
-
+    
 class EventModelTests(TestCase):
     @classmethod
     def setUpTestData(cls):

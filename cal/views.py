@@ -25,7 +25,7 @@ class CanvasItemListView(generic.ListView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-        user, courses, assignments = access_canvas()
+        user, courses, assignments = access_canvas(self.request.user)
         asgn_events = []
         for a in assignments:
             asgn_events.append(dict_to_event(a, user=self.request.user))
@@ -84,12 +84,14 @@ def index(request):
 
 def event(request, event_id=None):
     instance = Event()
+    create_new = False
     if event_id:    # If the event id is given, get the corresponding object so it can be edited
         instance = get_object_or_404(Event, pk=event_id)
     else:   # otherwise, use a blank Event
         instance = Event()
+        create_new=True
     
-    if instance.user != request.user:
+    if instance.user != request.user and not create_new:
         raise PermissionDenied
 
     form = EventForm(request.POST or None, instance=instance, user=request.user)   # create a form to create or edit the event
@@ -109,8 +111,13 @@ def delete_event(request, event_id=None):
         return HttpResponseRedirect(reverse('cal:monthlycalendar'))
     return render(request, 'cal/confirm_delete.html', {'evt_id':event_id})
 
-def access_canvas():
-    metadata = Metadata.load()
+def access_canvas(user):
+    try:
+        metadata = get_object_or_404(Metadata, user=user)
+    except:
+        metadata = Metadata()
+        metadata.last_canvas_call = datetime(2020, 1, 1)
+        metadata.user = user
 
     # Load the last call and localize it to UTC.
     last_call = metadata.last_canvas_call or pytz.utc.localize(datetime.utcnow())
@@ -137,7 +144,7 @@ def access_canvas():
                         a['course_name'] = c.name
                         assignments.append(a)
                 except Exception as ex:
-                    print(ex)
+                    print('failing')
     
     metadata.last_canvas_call = call_time
     metadata.save()
@@ -169,4 +176,4 @@ def signup(request):
             return HttpResponseRedirect(reverse('cal:monthlycalendar'))
     else:
         form = UserCreationForm()
-    return render(request, 'registration/signup.html', {'form':form})
+    return render(request, 'cal/signup.html', {'form':form})

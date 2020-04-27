@@ -1,5 +1,7 @@
 from django.forms import ModelForm, DateInput, TimeInput, HiddenInput
-from cal.models import Event
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
+from cal.models import Event, Metadata
 from datetime import datetime, date, time
 
 class EventForm(ModelForm):

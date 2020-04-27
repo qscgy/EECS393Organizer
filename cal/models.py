@@ -11,18 +11,14 @@ class Metadata(models.Model):
     Class to store metadata for the user.
     '''
     last_canvas_call = models.DateTimeField(null=True)  # the last time the Canvas API was called
-    
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, null=True)
+
     def save(self, *args, **kwargs):
         self.pk = 1
         super(Metadata, self).save(*args, **kwargs)
     
     def delete(self):
         pass
-
-    @classmethod
-    def load(cls):
-        obj, created = cls.objects.get_or_create(pk=1)
-        return obj
 
 class Event(models.Model):
     '''
