@@ -1,10 +1,12 @@
 from datetime import datetime, timedelta, date, timezone
 import calendar
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, HttpResponseRedirect
 from django.views import generic
 from django.utils.safestring import mark_safe
 from django.core.exceptions import PermissionDenied
+from django.contrib.auth import login, authenticate
+from django.contrib.auth.forms import UserCreationForm
 from .models import *
 from .utils import MonthlyCalendar
 from .forms import EventForm
@@ -157,3 +159,14 @@ def dict_to_event(assignment, user):
 def error_500(request, *args, **kwargs):
     data = {}
     return render(request, 'cal/500.html', data)
+
+def signup(request):
+    if request.method =='POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return HttpResponseRedirect(reverse('cal:monthlycalendar'))
+    else:
+        form = UserCreationForm()
+    return render(request, 'registration/signup.html', {'form':form})
