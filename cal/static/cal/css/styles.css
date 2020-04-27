@@ -97,6 +97,14 @@
     text-decoration: none;
   }
 
+  .sidenav .sidenav-text {
+    display: block;
+    color: white;
+    padding: 16px;
+    text-decoration: none;
+  }
+
+
   .sidenav a:hover {
     background-color: slateblue;
     color: white;

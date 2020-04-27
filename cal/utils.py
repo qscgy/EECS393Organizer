@@ -3,15 +3,18 @@ from calendar import HTMLCalendar, SUNDAY
 from .models import Event
 from django.shortcuts import reverse
 from django.utils.safestring import mark_safe
+from canvasapi import Canvas
+from django.conf import settings
 
 class MonthlyCalendar(HTMLCalendar):
-    def __init__(self, year=None, month=None):
+    def __init__(self, request, year=None, month=None):
         self.year = year
+        self.user = request.user
         self.month = month
         super(MonthlyCalendar, self).__init__()
     
     def formatday(self, day, events):
-        events_per_day = events.filter(start_time__day=day)
+        events_per_day = events.filter(user=self.user, start_date__day=day)
         d = ''
         for ev in events_per_day:
             d += f'<li>{ev.get_html_url}</li>'
